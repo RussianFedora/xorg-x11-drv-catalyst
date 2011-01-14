@@ -1,0 +1,175 @@
+#!/usr/bin/python -tt
+# -*- coding: UTF-8 -*-
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 only
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Copyright 2003, 2004 Peter Backlund
+# Copyright 2004 Thorsten Leemhuis
+# Copyright 2006, 2007 Van Assche Alphonse
+# Copyright 2006-2009 Stewart Adam
+
+# internal revision: 2.0
+
+import os
+import sys
+
+from livnaConfigDisplay.const import *
+from livnaConfigDisplay.const import _
+
+import livnaConfigDisplay.ConfigDisplay
+from livnaConfigDisplay.GlxConfig import *
+from livnaConfigDisplay import Utils
+from livnaConfigDisplay.ConfigFile import ConfigFile
+
+class catalystConfigDisplay(GlxConfig):
+  """Autoconfiguration class for fglrx"""
+  def __init__(self):
+    """Initializes the internal variables & objects"""
+    GlxConfig.__init__(self)
+    self.vendor = 'catalyst'
+    self.majorVendor = Utils.getMajorVendor()
+    if self.vendor != Utils.getVendor():
+      print _('The initscript and installed driver vendors do not match!')
+      sys.exit(1)
+    self.ldconf = LD_CONF_FILE % (self.vendor)
+    try:
+      self.doAllBackups()
+    except livnaConfigDisplayError, (bkupErrMsg):
+      print bkupErrMsg
+      sys.exit(1)
+    self.xconfig, self.xconfigpath = self.loadXconfig()
+    self.config = ConfigFile(STATUS_FILE)
+    self.TOP_MOD_DIR = self.getModTopDir()
+
+  def enable(self):
+    """Enable the driver"""
+    # Backup the file before make any change.
+    currentDriver = self.getDriver()
+    
+    # Annoying bit because newer catalyst drivers require a Screen section
+    if len(self.xconfig.layout) == 0: # no layouts
+      layout = xf86config.XF86ConfLayout()
+      self.xconfig.layout.insert(layout)
+      layout.identifier = "Default Layout"
+    else:
+      layout = self.xconfig.layout[0]
+    if len(layout.adjacencies) == 0: # no layout adjacencies
+      layout.adjacencies.insert(xf86config.XF86ConfAdjacency())
+    layout.adjacencies[0].screen = "Screen0"
+    if len(self.xconfig.screen) == 0: # no screens
+      screen = xf86config.XF86ConfScreen()
+      self.xconfig.screen.insert(screen)
+    else:
+      screen = self.xconfig.screen[0]
+    screen.device = "Videocard0"
+    screen.defaultdepth = 24
+    screen.identifier = "Screen0"
+    self.xconfig.device[0].identifier = 'Videocard0'
+    
+    # fglrx modules
+    self.addModulePath("/extensions/catalyst", self.TOP_MOD_DIR)
+    # 'remembering' magic's in here. Do not allow setting old driver to fglrx.
+    if currentDriver != self.majorVendor:
+      self.config.setOldDriver(currentDriver)
+    self.toggleDriver(currentDriver, self.majorVendor)
+    self.addOption(self.majorVendor,"OpenGLOverlay" ,"off")
+    self.addOption(self.majorVendor,"VideoOverlay" ,"on")
+    if self.xconfig.modules:
+      for module in ["glx", "dri", "extmod"]:
+        if self.onlyHasModule(module):
+          self.removeModule(module)
+          break
+        else:
+          self.addModule(module)
+    # if not already enabled
+    if not os.path.exists(self.ldconf):
+      if os.uname()[4] == "x86_64" :
+        x86_64Content = "/usr/lib/catalyst\n/usr/lib64/catalyst\n"
+        Utils.writeFile(self.ldconf, x86_64Content)
+      else:
+        Utils.writeFile(self.ldconf,"/usr/lib/catalyst\n")
+      print _('Running ldconfig, this could take some time...')
+      Utils.runLdconfig()
+    Utils.writeXorgConf(self.xconfig, self.xconfigpath)
+    self.restoreconf()
+
+  def disable(self):
+    """Disables the driver"""
+    self.removeModulePath("/extensions/catalyst", self.TOP_MOD_DIR)
+    # remove legacy path
+    self.removeModulePath("/extensions/fglrx", self.TOP_MOD_DIR)
+    # Check if it's already disabled
+    if not os.path.exists(self.ldconf):
+      print _('Driver already disabled.')
+      return
+    # We have to save the status file so it can be restored later
+    self.storeconf()
+    # Backup the file before make any change.
+    prevDriver = self.config.getOldDriver()
+    if prevDriver == self.vendor:
+      print _('Will not allow reverting from driver \'%s\' to \'%s\'.') % (self.vendor, self.vendor)
+      print _('Using the \'radeon\' driver instead.')
+      prevDriver = "radeon"
+      self.config.setOldDriver("radeon")
+    self.removeOption(self.majorVendor,"OpenGLOverlay")
+    self.removeOption(self.majorVendor,"VideoOverlay")
+    self.toggleDriver(self.majorVendor, prevDriver)
+    # Let's give control back to the naitive DRI
+    Utils.removeFile(self.ldconf)
+    print _('Running ldconfig, this could take some time...')
+    Utils.runLdconfig()
+    Utils.writeXorgConf(self.xconfig, self.xconfigpath)
+    # And return to the Fedora default.
+    self.enableAiglx()
+
+  def printUsage(self):
+    """Displays usage information"""
+    print _("Usage: %s-config-display  enable | disable ") % self.vendor
+
+  def run(self):
+    """Runs the appropriate autoconfiguation function"""
+    # Check number of arguments
+    # arg = action
+    if len(sys.argv) > 2:
+      print _('Wrong number of arguments')
+      self.printUsage()
+      sys.exit(1)
+    # Check value of argument
+    arg = sys.argv[1]
+    if not arg.lower() in ['enable', 'disable']:
+      print _('Invalid command: %s') % arg.lower()
+      self.printUsage()
+      sys.exit(1)
+    try:
+      if arg == "enable":
+        if self.getActive():
+          self.enable()
+        else:
+          print _('livna-config-display\'s `active\' state is False - Exiting')
+      elif arg == "disable":
+        if self.getActive():
+          self.disable()
+    except error, errMsg:
+      #raise # Uncomment me to show the real error
+      print MSG_CONF_APPLY_ERROR
+      try:
+        self.doAllRestores()
+      except livnaConfigDisplayError, (bkupErrMsg):
+        #raise # Uncomment me to show the real error
+        print MSG_CONF_RESTORE_ERROR + '\n' + MSG_TRACEBACK % (str(errMsg)) + '\n\n' + str(bkupErrMsg)
+        sys.exit(1)
+
+if __name__ == '__main__':
+  app = catalystConfigDisplay()
+  app.run()
+

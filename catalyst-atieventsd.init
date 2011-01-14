@@ -1,0 +1,72 @@
+#!/bin/sh
+
+# Startup script for the ATI External Events Daemon (atieventsd)
+#
+# chkconfig: 5 97 07
+# description: Grant or revoke access to X for the ATI External Events Daemon
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+[ -f /usr/sbin/atieventsd ] || exit 0
+
+prog=atieventsd
+opts=""
+
+PATH=/sbin:/usr/sbin:$PATH
+RETVAL=0
+
+start() {
+    echo -n $"Starting ATI External Events Daemon: "
+    XAUTHORITY=/var/run/$prog.Xauthority $prog $opts
+    RETVAL=$?
+    pid=`pidof $prog`
+        if [ -n "$pid" ] ; then
+            success $"atieventsd"
+            touch /var/lock/subsys/$prog
+            echo $pid > /var/run/$prog.pid
+            RETVAL=0
+        else
+            failure $"atieventsd"
+            RETVAL=1
+        fi
+    echo
+}
+
+stop() {
+    echo -n $"Stopping ATI External Events Daemon: "
+    killproc $prog
+    RETVAL=$?
+        if [ $RETVAL -eq 0 ]; then
+            rm -f /var/run/$prog.pid
+            rm -f /var/lock/subsys/$prog
+        fi
+    echo
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status $prog
+    ;;
+    restart|reload)
+        stop
+        start
+    ;;
+    condrestart)
+        if [ -f /var/lock/subsys/$prog ]; then
+            stop
+            start
+        fi
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+    ;;
+esac
+
+exit $RETVAL

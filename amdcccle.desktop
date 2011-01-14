@@ -1,0 +1,21 @@
+[Desktop Entry]
+Name=ATI Catalyst Control Center
+Name[de]=ATI Catalyst Control Center
+Name[es]=ATI Catalyst Control Center
+Name[fr]=ATI Catalyst Control Center
+Name[it]=ATI Catalyst Control Center
+GenericName=ATI Catalyst Control Center
+GenericName[de]=ATI Catalyst Control Center
+GenericName[es]=ATI Catalyst Control Center
+GenericName[fr]=ATI Catalyst Control Center
+GenericName[it]=ATI Catalyst Control Center
+Comment=ATI graphics adapter configuration
+Comment[de]=ATI Graphik-Adapterkonfiguration
+Comment[es]=Configuración del adaptador de los gráficos de ATI
+Comment[fr]=Configuration d'adapteur de graphiques d'ATI
+Comment[it]=Configurazione dell'adattatore dei grafici di ATI
+Icon=ccc_large
+Exec=amdcccle
+Type=Application
+Terminal=false
+Categories=Qt;System;
