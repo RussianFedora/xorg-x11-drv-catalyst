@@ -7,13 +7,13 @@
 %endif
 
 Name:            xorg-x11-drv-catalyst
-Version:         10.12
-Release:         3%{?dist}
+Version:         11.1
+Release:         1%{?dist}
 Summary:         AMD's proprietary driver for ATI graphic cards
 Group:           User Interface/X Hardware Support
 License:         Redistributable, no modification permitted
 URL:             http://www.ati.com/support/drivers/linux/radeon-linux.html
-Source0:         https://a248.e.akamai.net/f/674/9206/0/www2.ati.com/drivers/linux/ati-driver-installer-10-12-x86.x86_64.run
+Source0:         http://www2.ati.com/drivers/linux/ati-driver-installer-11-1-x86.x86_64.run
 Source1:         catalyst-README.Fedora
 Source3:         catalyst-config-display
 Source4:         catalyst-init
@@ -351,6 +351,9 @@ fi ||:
 %{_includedir}/fglrx/
 
 %changelog
+* Thu Jan 27 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.1-1
+- update to 11.1
+
 * Tue Dec 14 2010 Arkady L. Shane <ashejn@yandex-team.ru> - 10.12-3
 - fix path to fglrx_dri.so in %%post
 - move selinux %%post script to libs package
