@@ -1,19 +1,19 @@
 %define          atilibdir       %{_libdir}/catalyst
 
 # Tweak to have debuginfo - part 1/2
-%if 0%{?fedora} > 7
+%if 0%{?fedora} > 7 || 0%{?rhel} > 5
 %define __debug_install_post %{_builddir}/%{?buildsubdir}/find-debuginfo.sh %{_builddir}/%{?buildsubdir}\
 %{nil}
 %endif
 
 Name:            xorg-x11-drv-catalyst
-Version:         11.1
-Release:         1%{?dist}
+Version:         11.2
+Release:         1%{?dist}.1
 Summary:         AMD's proprietary driver for ATI graphic cards
 Group:           User Interface/X Hardware Support
 License:         Redistributable, no modification permitted
 URL:             http://www.ati.com/support/drivers/linux/radeon-linux.html
-Source0:         http://www2.ati.com/drivers/linux/ati-driver-installer-11-1-x86.x86_64.run
+Source0:         http://www2.ati.com/drivers/linux/ati-driver-installer-11-2-x86.x86_64.run
 Source1:         catalyst-README.Fedora
 Source3:         catalyst-config-display
 Source4:         catalyst-init
@@ -121,18 +121,18 @@ tar -cjf catalyst-kmod-data-%{version}.tar.bz2 fglrx/common/usr/share/doc/fglrx/
                                             fglrx/arch/*/*/modules/fglrx/
 
 # Tweak to have debuginfo - part 2/2
-%if 0%{?fedora} > 7
+%if 0%{?fedora} > 7 || 0%{?rhel} > 5
 cp -p %{_prefix}/lib/rpm/find-debuginfo.sh .
 sed -i -e 's|strict=true|strict=false|' find-debuginfo.sh
 %endif
 
 mkdir fglrxpkg
 %ifarch %{ix86}
-cp -r fglrx/common/* fglrx/x760/* fglrx/arch/x86/* fglrxpkg/
+cp -r fglrx/common/* fglrx/xpic/* fglrx/arch/x86/* fglrxpkg/
 %endif
 
 %ifarch x86_64
-cp -r fglrx/common/* fglrx/x760_64a/* fglrx/arch/x86_64/* fglrxpkg/
+cp -r fglrx/common/* fglrx/xpic_64a/* fglrx/arch/x86_64/* fglrxpkg/
 %endif
 
 # fix doc perms & copy README.Fedora
@@ -335,6 +335,7 @@ fi ||:
 %{_mandir}/man[1-9]/atieventsd.*
 %{_libdir}/xorg/modules/extensions/catalyst/
 %{_libdir}/xorg/modules/*.so
+%{_libdir}/xorg/modules/*.a
 
 %files libs
 %defattr(-,root,root,-)
@@ -351,6 +352,12 @@ fi ||:
 %{_includedir}/fglrx/
 
 %changelog
+* Tue Mar  1 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.2-1.1
+- add rules for rhel
+
+* Wed Feb 16 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.2-1
+- update to 11.2
+
 * Thu Jan 27 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.1-1
 - update to 11.1
 
