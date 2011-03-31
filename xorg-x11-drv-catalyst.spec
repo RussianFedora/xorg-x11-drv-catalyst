@@ -1,19 +1,19 @@
 %define          atilibdir       %{_libdir}/catalyst
 
 # Tweak to have debuginfo - part 1/2
-%if 0%{?fedora} > 7 || 0%{?rhel} > 5
+%if 0%{?fedora} > 7
 %define __debug_install_post %{_builddir}/%{?buildsubdir}/find-debuginfo.sh %{_builddir}/%{?buildsubdir}\
 %{nil}
 %endif
 
 Name:            xorg-x11-drv-catalyst
-Version:         11.2
-Release:         1%{?dist}.1
+Version:         11.3
+Release:         1%{?dist}
 Summary:         AMD's proprietary driver for ATI graphic cards
 Group:           User Interface/X Hardware Support
 License:         Redistributable, no modification permitted
 URL:             http://www.ati.com/support/drivers/linux/radeon-linux.html
-Source0:         http://www2.ati.com/drivers/linux/ati-driver-installer-11-2-x86.x86_64.run
+Source0:         http://www2.ati.com/drivers/linux/ati-driver-installer-11-3-x86.x86_64.run
 Source1:         catalyst-README.Fedora
 Source3:         catalyst-config-display
 Source4:         catalyst-init
@@ -121,7 +121,7 @@ tar -cjf catalyst-kmod-data-%{version}.tar.bz2 fglrx/common/usr/share/doc/fglrx/
                                             fglrx/arch/*/*/modules/fglrx/
 
 # Tweak to have debuginfo - part 2/2
-%if 0%{?fedora} > 7 || 0%{?rhel} > 5
+%if 0%{?fedora} > 7
 cp -p %{_prefix}/lib/rpm/find-debuginfo.sh .
 sed -i -e 's|strict=true|strict=false|' find-debuginfo.sh
 %endif
@@ -352,8 +352,8 @@ fi ||:
 %{_includedir}/fglrx/
 
 %changelog
-* Tue Mar  1 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.2-1.1
-- add rules for rhel
+* Thu Mar 31 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.3-1
+- update to 11.3
 
 * Wed Feb 16 2011 Arkady L. Shane <ashejn@yandex-team.ru> - 11.2-1
 - update to 11.2
