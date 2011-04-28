@@ -335,7 +335,8 @@ fi ||:
 %{_mandir}/man[1-9]/atieventsd.*
 %{_libdir}/xorg/modules/extensions/catalyst/
 %{_libdir}/xorg/modules/*.so
-%{_libdir}/xorg/modules/*.a
+%{_libdir}/catalyst/*
+#%{_libdir}/xorg/modules/*.a
 
 %files libs
 %defattr(-,root,root,-)
@@ -343,6 +344,7 @@ fi ||:
 %config %{_sysconfdir}/ld.so.conf.d/catalyst-%{_lib}.conf
 %{atilibdir}/*.so*
 %{atilibdir}/libAMDXvBA.cap
+%{atilibdir}/fglrx/*.so.*
 %{_libdir}/dri/
 
 %files devel
